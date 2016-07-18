@@ -19,7 +19,6 @@
 #![feature(plugin)]
 #![feature(box_syntax)]
 #![feature(const_fn)]
-#![feature(iter_arith)]
 #![cfg_attr(feature = "dev", plugin(clippy))]
 #![cfg_attr(not(feature = "dev"), allow(unknown_lints))]
 #![recursion_limit="100"]
@@ -53,7 +52,6 @@ extern crate nix;
 #[macro_use]
 pub mod util;
 pub mod raft;
-#[allow(clippy)]
 pub mod storage;
 
 pub use storage::{Storage, Dsn};
