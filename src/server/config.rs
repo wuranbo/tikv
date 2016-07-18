@@ -21,7 +21,7 @@ const DEFAULT_NOTIFY_CAPACITY: usize = 4096;
 const DEFAULT_MESSAGES_PER_TICK: usize = 256;
 const DEFAULT_SEND_BUFFER_SIZE: usize = 128 * 1024;
 const DEFAULT_RECV_BUFFER_SIZE: usize = 128 * 1024;
-const DEFAULT_STORAGE_SCHED_CONCURRENCY: usize = 4096;
+const DEFAULT_STORAGE_SCHED_CONCURRENCY: usize = 1024;
 
 #[derive(Clone, Debug)]
 pub struct Config {

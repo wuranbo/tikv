@@ -14,9 +14,8 @@
 use std::sync::Arc;
 use kvproto::kvrpcpb::Context;
 use storage::{Key, Value, KvPair, Mutation};
-use storage::{Snapshot, Cursor};
+use storage::{Engine, Snapshot, Cursor};
 use storage::mvcc::{MvccTxn, MvccSnapshot, Error as MvccError, MvccCursor};
-use storage::engine::Engine;
 
 use super::shard_mutex::ShardMutex;
 use super::{Error, Result};
@@ -43,21 +42,21 @@ impl TxnStore {
     }
 
     pub fn batch_get(&self,
-        ctx: Context,
-        keys: &[Key],
-        start_ts: u64)
-        -> Result<Vec<Result<Option<Value>>>> {
+                    ctx: Context,
+                    keys: &[Key],
+                    start_ts: u64)
+                    -> Result<Vec<Result<Option<Value>>>> {
         let snapshot = try!(self.engine.as_ref().as_ref().snapshot(&ctx));
         let snap_store = SnapshotStore::new(snapshot.as_ref(), start_ts);
         snap_store.batch_get(keys)
     }
 
     pub fn scan(&self,
-        ctx: Context,
-        key: Key,
-        limit: usize,
-        start_ts: u64)
-        -> Result<Vec<Result<KvPair>>> {
+                ctx: Context,
+                key: Key,
+                limit: usize,
+                start_ts: u64)
+                -> Result<Vec<Result<KvPair>>> {
         let snapshot = try!(self.engine.as_ref().as_ref().snapshot(&ctx));
         let snap_store = SnapshotStore::new(snapshot.as_ref(), start_ts);
         let mut scanner = try!(snap_store.scanner());
@@ -65,11 +64,11 @@ impl TxnStore {
     }
 
     pub fn reverse_scan(&self,
-        ctx: Context,
-        key: Key,
-        limit: usize,
-        start_ts: u64)
-        -> Result<Vec<Result<KvPair>>> {
+                        ctx: Context,
+                        key: Key,
+                        limit: usize,
+                        start_ts: u64)
+                        -> Result<Vec<Result<KvPair>>> {
         let snapshot = try!(self.engine.as_ref().as_ref().snapshot(&ctx));
         let snap_store = SnapshotStore::new(snapshot.as_ref(), start_ts);
         let mut scanner = try!(snap_store.scanner());
@@ -77,11 +76,11 @@ impl TxnStore {
     }
 
     pub fn prewrite(&self,
-        ctx: Context,
-        mutations: Vec<Mutation>,
-        primary: Vec<u8>,
-        start_ts: u64)
-        -> Result<Vec<Result<()>>> {
+                    ctx: Context,
+                    mutations: Vec<Mutation>,
+                    primary: Vec<u8>,
+                    start_ts: u64)
+                    -> Result<Vec<Result<()>>> {
         let _gurad = {
             let locked_keys: Vec<&Key> = mutations.iter().map(|x| x.key()).collect();
             self.shard_mutex.lock(&locked_keys)
@@ -104,11 +103,11 @@ impl TxnStore {
     }
 
     pub fn commit(&self,
-        ctx: Context,
-        keys: Vec<Key>,
-        start_ts: u64,
-        commit_ts: u64)
-        -> Result<()> {
+                ctx: Context,
+                keys: Vec<Key>,
+                start_ts: u64,
+                commit_ts: u64)
+                -> Result<()> {
         let _guard = self.shard_mutex.lock(&keys);
 
         let engine = self.engine.as_ref().as_ref();
@@ -123,12 +122,12 @@ impl TxnStore {
     }
 
     pub fn commit_then_get(&self,
-        ctx: Context,
-        key: Key,
-        lock_ts: u64,
-        commit_ts: u64,
-        get_ts: u64)
-        -> Result<Option<Value>> {
+                            ctx: Context,
+                            key: Key,
+                            lock_ts: u64,
+                            commit_ts: u64,
+                            get_ts: u64)
+                            -> Result<Option<Value>> {
         let _guard = self.shard_mutex.lock(&[&key]);
 
         let engine = self.engine.as_ref().as_ref();

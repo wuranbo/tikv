@@ -191,9 +191,11 @@ impl Scheduler {
 
             // release lock and wake up waiting commands
             let wakeup_list = self.rowlocks.release_by_indexs(&rctx.needed_locks(), cid);
-            for cid in wakeup_list {
-                if let Err(e) = self.schedch.send(Msg::AcquireLock { cid: cid }) {
-                    error!("wake up cmd failed, cid = {}, error = {:?}", cid, e);
+            for wcid in wakeup_list {
+                if let Err(e) = self.schedch.send(Msg::AcquireLock { cid: wcid }) {
+                    error!("wake up cmd failed, cid = {}, error = {:?}", wcid, e);
+                } else {
+                    debug!("wake up cmd for acquire lock, cid = {}", wcid);
                 }
             }
         }
@@ -461,7 +463,7 @@ impl Scheduler {
         } else {
             // write command need acquire row lock first
             // if acquire all locks then get snapshot, or this command
-            // will be wake up by who owned lock after release lock
+            // will be wake up by who owned lock when it release the lock
             let lock_idxs = self.calc_lock_indexs(&cmd);
             let mut ctx: RunningCtx = RunningCtx::new(cid, cmd, lock_idxs);
 
@@ -474,6 +476,8 @@ impl Scheduler {
                     self.process_failed_cmd(cid, e);
                     self.finish_cmd(cid);
                 }
+            } else {
+                debug!("command acquire lock failed, waiting for release, cid = {}", cid);
             }
 
             self.save_cmd_context(cid, ctx);
@@ -633,13 +637,13 @@ impl Scheduler {
 }
 
 fn register_timer(event_loop: &mut EventLoop<Scheduler>,
-    tick: Tick,
-    delay: u64)
-    -> Result<mio::Timeout> {
+                    tick: Tick,
+                    delay: u64)
+                    -> Result<mio::Timeout> {
     // TODO: now mio TimerError doesn't implement Error trait,
     // so we can't use `try!` directly.
     event_loop.timeout(tick, Duration::from_millis(delay))
-    .map_err(|e| box_err!("register timer err: {:?}", e))
+        .map_err(|e| box_err!("register timer err: {:?}", e))
 }
 
 impl mio::Handler for Scheduler {

@@ -63,8 +63,7 @@ impl MemRowLocks {
 
             let mut front: Option<u64> = None;
             if let Some(cid) = rowlock.waiting.front() {
-                let fcid = *cid;
-                front = Some(fcid);
+                front = Some(*cid);
             }
 
             match front {
@@ -72,7 +71,7 @@ impl MemRowLocks {
                     if cid == who {
                         acquired_count += 1;
                     } else {
-                        if !rowlock.set.contains(&cid) {
+                        if !rowlock.set.contains(&who) {
                             rowlock.waiting.push_back(who);
                             rowlock.set.insert(who);
                         }
