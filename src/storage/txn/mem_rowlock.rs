@@ -50,6 +50,8 @@ impl MemRowLocks {
         where H: Hash
     {
         let mut indices: Vec<usize> = keys.iter().map(|x| self.calc_index(x)).collect();
+
+        // prevent from deadlock
         indices.sort();
         indices.dedup();
         indices
@@ -125,5 +127,29 @@ impl MemRowLocks {
         let mut s = SipHasher::new();
         key.hash(&mut s);
         (s.finish() as usize) % self.size
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::MemRowLocks;
+
+    #[test]
+    fn test_wakeup_cmd() {
+        let mut mem_rowlocks = MemRowLocks::new(256);
+
+        let indexs_a: Vec<usize> = vec![1, 3, 5];
+        let indexs_b: Vec<usize> = vec![4, 5, 6];
+        let cid_a: u64 = 1;
+        let cid_b: u64 = 2;
+
+        let acquired_a: usize = mem_rowlocks.acquire_by_indexs(&indexs_a, cid_a);
+        assert_eq!(acquired_a, 3);
+
+        let acquired_b: usize = mem_rowlocks.acquire_by_indexs(&indexs_b, cid_b);
+        assert_eq!(acquired_b, 1);
+
+        let wakeup = mem_rowlocks.release_by_indexs(&indexs_a, cid_a);
+        assert_eq!(wakeup[0], cid_b);
     }
 }

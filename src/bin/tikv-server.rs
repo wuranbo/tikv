@@ -178,7 +178,7 @@ fn get_rocksdb_option(matches: &Matches, config: &toml::Value) -> RocksdbOptions
 //                                             "rocksdb.block-based-table.block-cache-size",
 //                                             matches,
 //                                             config,
-//                                             Some(128 * 1024 * 1024),
+//                                             Some(1024 * 1024 * 1024),
 //                                             |v| v.as_integer());
 //    block_base_opts.set_lru_cache(block_cache_size as u64);
 //
